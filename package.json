@@ -43,6 +43,7 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
+		"@lucide/svelte": "^1.25.0",
 		"bcryptjs": "^3.0.3",
 		"svelte-dnd-action": "^0.9.74"
 	}

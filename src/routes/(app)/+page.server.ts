@@ -8,6 +8,7 @@ export const actions: Actions = {
 	createList: async ({ request }) => {
 		const data = await request.formData();
 		const name = data.get('name')?.toString().trim();
+		const id = data.get('id')?.toString();
 		if (!name) return fail(400, { error: 'List name is required' });
 
 		const [maxOrderRow] = await db
@@ -17,6 +18,7 @@ export const actions: Actions = {
 			.limit(1);
 
 		await db.insert(lists).values({
+			...(id ? { id } : {}),
 			name,
 			order: (maxOrderRow?.order ?? 0) + 1
 		});

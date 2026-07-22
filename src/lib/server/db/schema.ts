@@ -29,3 +29,4 @@ export const todos = sqliteTable('todos', {
 
 export type List = typeof lists.$inferSelect;
 export type Todo = typeof todos.$inferSelect;
+export type ListWithCount = List & { todoCount: number };

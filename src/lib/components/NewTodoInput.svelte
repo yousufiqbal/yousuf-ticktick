@@ -1,33 +1,59 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import { Plus } from '@lucide/svelte';
+	import type { Todo } from '$lib/server/db/schema';
+
+	let {
+		listId,
+		onAdd,
+		onFailure
+	}: { listId: string; onAdd: (todo: Todo) => void; onFailure: (id: string) => void } = $props();
 
 	let formEl: HTMLFormElement;
+
+	function didFail(result: { type: string }) {
+		return result.type === 'failure' || result.type === 'error';
+	}
 </script>
 
 <form
 	bind:this={formEl}
 	method="POST"
 	action="?/createTodo"
-	use:enhance={() => {
-		return async ({ update }) => {
-			await update();
-			formEl.reset();
+	class="mx-6 mb-4 flex items-center gap-2 rounded-xl bg-neutral-100 px-6 py-3.5"
+	use:enhance={({ formData }) => {
+		const title = formData.get('title')?.toString().trim();
+		if (!title) return;
+
+		const id = crypto.randomUUID();
+		formData.set('id', id);
+
+		formEl.reset();
+
+		onAdd({
+			id,
+			listId,
+			title,
+			completed: false,
+			order: Date.now(),
+			createdAt: new Date()
+		});
+
+		return async ({ result }) => {
+			if (didFail(result)) onFailure(id);
+			invalidateAll();
 		};
 	}}
-	class="flex gap-2 border-b border-neutral-200 p-3"
 >
+	<Plus size={16} class="shrink-0 text-neutral-400" />
 	<input
 		name="title"
 		type="text"
-		placeholder="Add a todo…"
+		placeholder="Add task"
 		required
 		autofocus
-		class="min-w-0 flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+		class="min-w-0 flex-1 border-none bg-transparent text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none"
 	/>
-	<button
-		type="submit"
-		class="shrink-0 rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800"
-	>
-		Add
-	</button>
+	<button type="submit" class="sr-only">Add</button>
 </form>

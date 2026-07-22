@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { lists, todos } from '$lib/server/db/schema';
-import { eq, asc, desc, and, ne } from 'drizzle-orm';
+import { eq, desc, and, ne } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		.select()
 		.from(todos)
 		.where(eq(todos.listId, params.id))
-		.orderBy(asc(todos.order));
+		.orderBy(desc(todos.order));
 
 	return { list, todos: listTodos };
 };
@@ -21,6 +21,7 @@ export const actions: Actions = {
 	createTodo: async ({ request, params }) => {
 		const data = await request.formData();
 		const title = data.get('title')?.toString().trim();
+		const id = data.get('id')?.toString();
 		if (!title) return fail(400, { error: 'Todo title is required' });
 
 		const [maxOrderRow] = await db
@@ -31,6 +32,7 @@ export const actions: Actions = {
 			.limit(1);
 
 		await db.insert(todos).values({
+			...(id ? { id } : {}),
 			listId: params.id,
 			title,
 			order: (maxOrderRow?.order ?? 0) + 1
