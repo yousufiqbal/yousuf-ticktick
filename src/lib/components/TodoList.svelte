@@ -2,7 +2,8 @@
 	import { dragHandleZone } from 'svelte-dnd-action';
 	import { invalidateAll } from '$app/navigation';
 	import { flip } from 'svelte/animate';
-	import { ChevronDown, ChevronRight } from '@lucide/svelte';
+	import { ChevronDown, ChevronRight, X } from '@lucide/svelte';
+	import { closeOnOutsideClick } from '$lib/actions/closeOnOutsideClick';
 	import TodoItem from './TodoItem.svelte';
 	import NewTodoInput from './NewTodoInput.svelte';
 	import type { ListWithCount, Todo } from '$lib/server/db/schema';
@@ -10,9 +11,13 @@
 	let { todos, lists, listId }: { todos: Todo[]; lists: ListWithCount[]; listId: string } =
 		$props();
 
+	const otherLists = $derived(lists.filter((l) => l.id !== listId));
+
 	let activeItems = $state<Todo[]>([]);
 	let completedItems = $state<Todo[]>([]);
 	let completedOpen = $state(true);
+	let selectedIds = $state<Set<string>>(new Set());
+	let lastSelectedId = $state<string | null>(null);
 
 	$effect(() => {
 		activeItems = todos.filter((t) => !t.completed);
@@ -42,8 +47,51 @@
 			completedItems = [...completedItems, { ...todo, completed: true }];
 		} else {
 			completedItems = completedItems.filter((t) => t.id !== todo.id);
-			activeItems = [...activeItems, { ...todo, completed: false }];
+			activeItems = [{ ...todo, completed: false, order: Date.now() }, ...activeItems];
 		}
+	}
+
+	function handleSelect(todo: Todo, event: MouseEvent) {
+		if (event.shiftKey && lastSelectedId) {
+			const ids = activeItems.map((t) => t.id);
+			const from = ids.indexOf(lastSelectedId);
+			const to = ids.indexOf(todo.id);
+			if (from !== -1 && to !== -1) {
+				const [start, end] = from < to ? [from, to] : [to, from];
+				selectedIds = new Set(ids.slice(start, end + 1));
+			}
+		} else if (event.ctrlKey || event.metaKey) {
+			const next = new Set(selectedIds);
+			if (next.has(todo.id)) {
+				next.delete(todo.id);
+			} else {
+				next.add(todo.id);
+			}
+			selectedIds = next;
+			lastSelectedId = todo.id;
+		} else {
+			selectedIds = new Set([todo.id]);
+			lastSelectedId = todo.id;
+		}
+	}
+
+	function clearSelection() {
+		selectedIds = new Set();
+		lastSelectedId = null;
+	}
+
+	async function moveSelectedTo(targetListId: string) {
+		const ids = Array.from(selectedIds);
+		activeItems = activeItems.filter((t) => !selectedIds.has(t.id));
+		completedItems = completedItems.filter((t) => !selectedIds.has(t.id));
+		clearSelection();
+
+		await fetch('/move-todos', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ ids, targetListId })
+		});
+		invalidateAll();
 	}
 
 	function handleConsider(e: CustomEvent<{ items: Todo[] }>) {
@@ -68,7 +116,47 @@
 	}
 </script>
 
-<NewTodoInput {listId} onAdd={addOptimistic} onFailure={removeOptimistic} />
+{#if selectedIds.size > 1}
+	<div
+		class="mx-6 mb-4 flex items-center justify-between rounded-xl bg-neutral-900 px-6 py-3.5 text-white"
+	>
+		<span class="text-sm">{selectedIds.size} selected</span>
+		<div class="flex items-center gap-1">
+			{#if otherLists.length > 0}
+				<details use:closeOnOutsideClick class="relative">
+					<summary
+						class="cursor-pointer list-none rounded px-3 py-1.5 text-sm hover:bg-white/10 [&::-webkit-details-marker]:hidden"
+					>
+						Move to…
+					</summary>
+					<div
+						class="absolute right-0 z-10 mt-1 w-40 rounded-md border border-neutral-200 bg-white py-1 shadow-md"
+					>
+						{#each otherLists as list (list.id)}
+							<button
+								type="button"
+								onclick={() => moveSelectedTo(list.id)}
+								class="block w-full truncate px-3 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-100"
+							>
+								{list.name}
+							</button>
+						{/each}
+					</div>
+				</details>
+			{/if}
+			<button
+				type="button"
+				aria-label="Clear selection"
+				onclick={clearSelection}
+				class="rounded p-1.5 hover:bg-white/10"
+			>
+				<X size={14} />
+			</button>
+		</div>
+	</div>
+{:else}
+	<NewTodoInput {listId} onAdd={addOptimistic} onFailure={removeOptimistic} />
+{/if}
 
 <div
 	use:dragHandleZone={{ items: activeItems, flipDurationMs: 150 }}
@@ -80,9 +168,11 @@
 			{todo}
 			{lists}
 			draggable
+			selected={selectedIds.has(todo.id)}
 			onToggle={toggleLocal}
 			onRemove={removeOptimistic}
 			onRestore={restoreOptimistic}
+			onSelect={handleSelect}
 		/>
 	{:else}
 		<p class="px-6 py-4 text-sm text-neutral-400">No todos yet.</p>

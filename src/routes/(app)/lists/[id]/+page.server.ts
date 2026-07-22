@@ -39,13 +39,28 @@ export const actions: Actions = {
 		});
 	},
 
-	toggleTodo: async ({ request }) => {
+	toggleTodo: async ({ request, params }) => {
 		const data = await request.formData();
 		const id = data.get('id')?.toString();
 		const completed = data.get('completed')?.toString() === 'true';
 		if (!id) return fail(400, { error: 'Todo id is required' });
 
-		await db.update(todos).set({ completed: !completed }).where(eq(todos.id, id));
+		if (!completed) {
+			await db.update(todos).set({ completed: true }).where(eq(todos.id, id));
+			return;
+		}
+
+		const [maxOrderRow] = await db
+			.select({ order: todos.order })
+			.from(todos)
+			.where(eq(todos.listId, params.id))
+			.orderBy(desc(todos.order))
+			.limit(1);
+
+		await db
+			.update(todos)
+			.set({ completed: false, order: (maxOrderRow?.order ?? 0) + 1 })
+			.where(eq(todos.id, id));
 	},
 
 	deleteTodo: async ({ request }) => {

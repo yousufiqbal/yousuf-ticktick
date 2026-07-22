@@ -5,6 +5,7 @@
 	import NewListInput from './NewListInput.svelte';
 	import Modal from './Modal.svelte';
 	import { List as ListIcon, MoreHorizontal, Pencil, Trash2, LogOut, Plus } from '@lucide/svelte';
+	import { closeOnOutsideClick } from '$lib/actions/closeOnOutsideClick';
 	import type { ListWithCount } from '$lib/server/db/schema';
 
 	let { lists, activeListId = null }: { lists: ListWithCount[]; activeListId?: string | null } =
@@ -81,7 +82,7 @@
 			{@const isActive = list.id === activeListId}
 			<div
 				transition:fly={{ y: -6, duration: 200 }}
-				class="group relative flex h-9 items-center gap-2 rounded-lg px-2 {isActive
+				class="group relative mb-[3px] flex h-9 items-center gap-2 rounded-lg px-2 {isActive
 					? 'bg-neutral-200'
 					: 'hover:bg-neutral-200'}"
 			>
@@ -103,7 +104,10 @@
 					{list.todoCount}
 				</span>
 
-				<details class="hidden shrink-0 group-hover:block">
+				<details
+					use:closeOnOutsideClick
+					class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 open:opacity-100"
+				>
 					<summary
 						class="flex list-none rounded p-1 text-neutral-400 hover:text-neutral-700 [&::-webkit-details-marker]:hidden"
 					>
