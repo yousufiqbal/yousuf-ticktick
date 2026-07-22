@@ -2,6 +2,7 @@
 	import { dragHandleZone } from 'svelte-dnd-action';
 	import { invalidateAll } from '$app/navigation';
 	import { flip } from 'svelte/animate';
+	import { fade } from 'svelte/transition';
 	import { ChevronDown, ChevronRight, X } from '@lucide/svelte';
 	import { closeOnOutsideClick } from '$lib/actions/closeOnOutsideClick';
 	import TodoItem from './TodoItem.svelte';
@@ -18,6 +19,8 @@
 	let completedOpen = $state(true);
 	let selectedIds = $state<Set<string>>(new Set());
 	let lastSelectedId = $state<string | null>(null);
+
+	const showMoveBar = $derived(selectedIds.size > 1);
 
 	$effect(() => {
 		activeItems = todos.filter((t) => !t.completed);
@@ -116,47 +119,53 @@
 	}
 </script>
 
-{#if selectedIds.size > 1}
-	<div
-		class="mx-6 mb-4 flex items-center justify-between rounded-xl bg-neutral-900 px-6 py-3.5 text-white"
-	>
-		<span class="text-sm">{selectedIds.size} selected</span>
-		<div class="flex items-center gap-1">
-			{#if otherLists.length > 0}
-				<details use:closeOnOutsideClick class="relative">
-					<summary
-						class="cursor-pointer list-none rounded px-3 py-1.5 text-sm hover:bg-white/10 [&::-webkit-details-marker]:hidden"
-					>
-						Move to…
-					</summary>
-					<div
-						class="absolute right-0 z-10 mt-1 w-40 rounded-md border border-neutral-200 bg-white py-1 shadow-md"
-					>
-						{#each otherLists as list (list.id)}
-							<button
-								type="button"
-								onclick={() => moveSelectedTo(list.id)}
-								class="block w-full truncate px-3 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-100"
-							>
-								{list.name}
-							</button>
-						{/each}
-					</div>
-				</details>
-			{/if}
-			<button
-				type="button"
-				aria-label="Clear selection"
-				onclick={clearSelection}
-				class="rounded p-1.5 hover:bg-white/10"
-			>
-				<X size={14} />
-			</button>
+<div class="relative mx-5 mb-3 h-11">
+	{#if showMoveBar}
+		<div
+			in:fade={{ duration: 150 }}
+			out:fade={{ duration: 100 }}
+			class="absolute inset-0 flex items-center justify-between rounded-xl bg-neutral-900 px-5 text-white"
+		>
+			<span class="text-sm">{selectedIds.size} selected</span>
+			<div class="flex items-center gap-1">
+				{#if otherLists.length > 0}
+					<details use:closeOnOutsideClick class="relative">
+						<summary
+							class="cursor-pointer list-none rounded px-3 py-1.5 text-sm hover:bg-white/10 [&::-webkit-details-marker]:hidden"
+						>
+							Move to…
+						</summary>
+						<div
+							class="absolute right-0 z-10 mt-1 w-40 rounded-md border border-neutral-200 bg-white py-1 shadow-md"
+						>
+							{#each otherLists as list (list.id)}
+								<button
+									type="button"
+									onclick={() => moveSelectedTo(list.id)}
+									class="block w-full truncate px-3 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-100"
+								>
+									{list.name}
+								</button>
+							{/each}
+						</div>
+					</details>
+				{/if}
+				<button
+					type="button"
+					aria-label="Clear selection"
+					onclick={clearSelection}
+					class="rounded p-1.5 hover:bg-white/10"
+				>
+					<X size={14} />
+				</button>
+			</div>
 		</div>
-	</div>
-{:else}
-	<NewTodoInput {listId} onAdd={addOptimistic} onFailure={removeOptimistic} />
-{/if}
+	{:else}
+		<div class="absolute inset-0" in:fade={{ duration: 150 }} out:fade={{ duration: 100 }}>
+			<NewTodoInput {listId} onAdd={addOptimistic} onFailure={removeOptimistic} />
+		</div>
+	{/if}
+</div>
 
 <div
 	use:dragHandleZone={{ items: activeItems, flipDurationMs: 150 }}
@@ -175,16 +184,16 @@
 			onSelect={handleSelect}
 		/>
 	{:else}
-		<p class="px-6 py-4 text-sm text-neutral-400">No todos yet.</p>
+		<p class="px-5 py-4 text-sm text-neutral-400">No todos yet.</p>
 	{/each}
 </div>
 
 {#if completedItems.length > 0}
-	<div class="mt-6">
+	<div class="mt-4">
 		<button
 			type="button"
 			onclick={() => (completedOpen = !completedOpen)}
-			class="flex items-center gap-1 px-6 pb-2 text-sm font-medium text-neutral-700"
+			class="flex items-center gap-1 px-5 pb-2 text-sm font-medium text-neutral-700"
 		>
 			{#if completedOpen}
 				<ChevronDown size={14} class="text-neutral-400" />

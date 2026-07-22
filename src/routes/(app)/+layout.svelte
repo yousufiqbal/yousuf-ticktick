@@ -2,6 +2,7 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { page, navigating } from '$app/state';
 	import { fade } from 'svelte/transition';
+	import { LoaderCircle } from '@lucide/svelte';
 
 	let { data, children } = $props();
 </script>
@@ -19,10 +20,18 @@
 	<aside class="hidden md:block">
 		<Sidebar lists={data.lists} activeListId={page.params.id ?? null} />
 	</aside>
-	<main class="min-w-0 overflow-y-auto">
+	<main class="relative min-w-0 overflow-y-auto">
 		<div class="h-full max-w-[700px] border-r border-neutral-200">
 			{@render children()}
 		</div>
+		{#if navigating.to}
+			<div
+				transition:fade={{ duration: 100 }}
+				class="absolute inset-0 flex items-center justify-center bg-white/70"
+			>
+				<LoaderCircle size={22} class="animate-spin text-neutral-400" />
+			</div>
+		{/if}
 	</main>
 </div>
 

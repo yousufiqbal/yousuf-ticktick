@@ -45,11 +45,6 @@ export const actions: Actions = {
 		const completed = data.get('completed')?.toString() === 'true';
 		if (!id) return fail(400, { error: 'Todo id is required' });
 
-		if (!completed) {
-			await db.update(todos).set({ completed: true }).where(eq(todos.id, id));
-			return;
-		}
-
 		const [maxOrderRow] = await db
 			.select({ order: todos.order })
 			.from(todos)
@@ -59,7 +54,7 @@ export const actions: Actions = {
 
 		await db
 			.update(todos)
-			.set({ completed: false, order: (maxOrderRow?.order ?? 0) + 1 })
+			.set({ completed: !completed, order: (maxOrderRow?.order ?? 0) + 1 })
 			.where(eq(todos.id, id));
 	},
 

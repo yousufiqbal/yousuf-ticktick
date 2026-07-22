@@ -41,7 +41,7 @@
 	in:fly={{ y: 8, duration: 200 }}
 	out:fly={navigating.to ? { duration: 0 } : { x: 24, duration: 200 }}
 >
-	<div class="group flex items-center gap-3 px-6 py-2.5 {selected ? 'bg-neutral-100' : ''}">
+	<div class="group flex items-center gap-2 px-5 py-2 {selected ? 'bg-neutral-100' : ''}">
 		{#if draggable}
 			<span
 				use:dragHandle
@@ -72,8 +72,8 @@
 				type="submit"
 				aria-label={todo.completed ? 'Mark incomplete' : 'Mark complete'}
 				class="flex h-4 w-4 items-center justify-center rounded-[4px] border transition-colors {todo.completed
-					? 'border-neutral-300 bg-neutral-300 text-white'
-					: 'border-neutral-300'}"
+					? 'border-neutral-300 bg-neutral-300 text-white hover:border-neutral-400 hover:bg-neutral-400'
+					: 'border-neutral-300 hover:border-neutral-500'}"
 			>
 				{#if todo.completed}
 					<Check size={11} />
@@ -153,6 +153,6 @@
 	</div>
 
 	{#if showDivider}
-		<div class="mx-6 border-b border-neutral-100"></div>
+		<div class="mx-5 border-b border-neutral-100"></div>
 	{/if}
 </div>

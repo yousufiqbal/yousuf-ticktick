@@ -21,7 +21,7 @@
 	bind:this={formEl}
 	method="POST"
 	action="?/createTodo"
-	class="mx-6 mb-4 flex items-center gap-2 rounded-xl bg-neutral-100 px-6 py-3.5"
+	class="flex h-full w-full items-center gap-2 rounded-xl bg-neutral-100 px-5"
 	use:enhance={({ formData }) => {
 		const title = formData.get('title')?.toString().trim();
 		if (!title) return;

@@ -6,12 +6,12 @@
 </script>
 
 <div class="flex h-full flex-col">
-	<div class="flex items-center gap-2 px-6 pt-6 pb-4">
+	<div class="flex items-center gap-2 px-5 pt-5 pb-3">
 		<a href="/" class="text-neutral-400 hover:text-neutral-700 md:hidden">
 			<ArrowLeft size={18} />
 		</a>
 		<ListIcon size={16} class="hidden shrink-0 text-neutral-400 md:block" />
-		<h1 class="truncate text-xl font-semibold text-neutral-900">{data.list.name}</h1>
+		<h1 class="truncate text-lg font-semibold text-neutral-900">{data.list.name}</h1>
 	</div>
 
 	<div class="flex-1 overflow-y-auto">
