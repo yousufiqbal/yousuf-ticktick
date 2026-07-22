@@ -68,7 +68,7 @@
 </script>
 
 <div class="flex h-full flex-col" style="background-color: #F3F4F4;">
-	<div class="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+	<div class="flex items-center justify-between px-4 py-3">
 		<h2 class="text-sm font-semibold tracking-wide text-neutral-500 uppercase">Lists</h2>
 		<button
 			type="button"
