@@ -17,7 +17,8 @@
 		onToggle,
 		onRemove,
 		onRestore,
-		onSelect
+		onSelect,
+		onEdit
 	}: {
 		todo: Todo;
 		lists: ListWithCount[];
@@ -28,13 +29,40 @@
 		onRemove: (id: string) => void;
 		onRestore: (todo: Todo) => void;
 		onSelect?: (todo: Todo, event: MouseEvent) => void;
+		onEdit: (id: string, title: string) => void;
 	} = $props();
 
 	const otherLists = $derived(lists.filter((l) => l.id !== todo.listId));
 
+	let editing = $state(false);
+	let draftTitle = $state(todo.title);
+	let editFormEl: HTMLFormElement;
+	let editInputEl: HTMLInputElement;
+
 	function didFail(result: { type: string }) {
 		return result.type === 'failure' || result.type === 'error';
 	}
+
+	function startEdit() {
+		draftTitle = todo.title;
+		editing = true;
+	}
+
+	function commitEdit() {
+		const title = draftTitle.trim();
+		editing = false;
+		if (!title || title === todo.title) return;
+		onEdit(todo.id, title);
+		editFormEl.requestSubmit();
+	}
+
+	function cancelEdit() {
+		editing = false;
+	}
+
+	$effect(() => {
+		if (editing) editInputEl?.focus();
+	});
 </script>
 
 <div
@@ -81,16 +109,50 @@
 			</button>
 		</form>
 
-		<span
-			role="button"
-			tabindex="-1"
-			onclick={(e) => onSelect?.(todo, e)}
-			class="block min-w-0 flex-1 truncate text-sm {todo.completed
-				? 'text-neutral-400 line-through'
-				: 'text-neutral-800'}"
-		>
-			{todo.title}
-		</span>
+		{#if editing}
+			<form
+				bind:this={editFormEl}
+				method="POST"
+				action="?/editTodo"
+				class="min-w-0 flex-1"
+				use:enhance={() => {
+					return async ({ result }) => {
+						if (didFail(result)) onEdit(todo.id, todo.title);
+						invalidateAll();
+					};
+				}}
+			>
+				<input type="hidden" name="id" value={todo.id} />
+				<input
+					bind:this={editInputEl}
+					name="title"
+					bind:value={draftTitle}
+					onblur={commitEdit}
+					onkeydown={(e) => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							commitEdit();
+						} else if (e.key === 'Escape') {
+							e.preventDefault();
+							cancelEdit();
+						}
+					}}
+					class="block w-full min-w-0 border-none bg-transparent p-0 text-sm text-neutral-800 focus:outline-none"
+				/>
+			</form>
+		{:else}
+			<span
+				role="button"
+				tabindex="-1"
+				onclick={(e) => onSelect?.(todo, e)}
+				ondblclick={startEdit}
+				class="block min-w-0 flex-1 truncate text-sm {todo.completed
+					? 'text-neutral-400 line-through'
+					: 'text-neutral-800'}"
+			>
+				{todo.title}
+			</span>
+		{/if}
 
 		<form
 			method="POST"

@@ -11,7 +11,8 @@
 		use:enhance
 		class="w-full max-w-sm rounded-lg border border-neutral-200 bg-white p-6 shadow-sm"
 	>
-		<h1 class="mb-4 text-lg font-semibold text-neutral-900">Sign in</h1>
+		<h1 class="mb-1 text-lg font-semibold text-neutral-900">Todo Manager</h1>
+		<p class="mb-4 text-sm text-neutral-500">Sign in to continue</p>
 		<label class="mb-1 block text-sm font-medium text-neutral-700" for="password">Password</label>
 		<input
 			id="password"

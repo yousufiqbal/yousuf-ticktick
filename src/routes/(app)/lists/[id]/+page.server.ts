@@ -58,6 +58,15 @@ export const actions: Actions = {
 			.where(eq(todos.id, id));
 	},
 
+	editTodo: async ({ request }) => {
+		const data = await request.formData();
+		const id = data.get('id')?.toString();
+		const title = data.get('title')?.toString().trim();
+		if (!id || !title) return fail(400, { error: 'Todo id and title are required' });
+
+		await db.update(todos).set({ title }).where(eq(todos.id, id));
+	},
+
 	deleteTodo: async ({ request }) => {
 		const data = await request.formData();
 		const id = data.get('id')?.toString();

@@ -1,10 +1,21 @@
 <script lang="ts">
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { page, navigating } from '$app/state';
-	import { fade } from 'svelte/transition';
+	import { fade, fly } from 'svelte/transition';
 	import { LoaderCircle } from '@lucide/svelte';
+	import { setContext } from 'svelte';
 
 	let { data, children } = $props();
+
+	let drawerOpen = $state(false);
+
+	setContext('drawer', {
+		open: () => (drawerOpen = true),
+		close: () => (drawerOpen = false),
+		get isOpen() {
+			return drawerOpen;
+		}
+	});
 </script>
 
 {#if navigating.to}
@@ -13,6 +24,24 @@
 		class="fixed inset-x-0 top-0 z-50 h-0.5 overflow-hidden bg-neutral-100"
 	>
 		<div class="h-full w-1/3 animate-[loading-bar_1s_ease-in-out_infinite] bg-neutral-900"></div>
+	</div>
+{/if}
+
+{#if drawerOpen}
+	<div
+		transition:fade={{ duration: 150 }}
+		onclick={() => (drawerOpen = false)}
+		class="fixed inset-0 z-40 bg-black/30 md:hidden"
+	></div>
+	<div
+		transition:fly={{ x: -280, duration: 200 }}
+		class="fixed inset-y-0 left-0 z-50 w-[260px] md:hidden"
+	>
+		<Sidebar
+			lists={data.lists}
+			activeListId={page.params.id ?? null}
+			onNavigate={() => (drawerOpen = false)}
+		/>
 	</div>
 {/if}
 

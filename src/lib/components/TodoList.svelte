@@ -3,7 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
-	import { ChevronDown, ChevronRight, X } from '@lucide/svelte';
+	import { X } from '@lucide/svelte';
 	import { closeOnOutsideClick } from '$lib/actions/closeOnOutsideClick';
 	import TodoItem from './TodoItem.svelte';
 	import NewTodoInput from './NewTodoInput.svelte';
@@ -16,7 +16,6 @@
 
 	let activeItems = $state<Todo[]>([]);
 	let completedItems = $state<Todo[]>([]);
-	let completedOpen = $state(true);
 	let selectedIds = $state<Set<string>>(new Set());
 	let lastSelectedId = $state<string | null>(null);
 
@@ -47,11 +46,16 @@
 	function toggleLocal(todo: Todo) {
 		if (activeItems.some((t) => t.id === todo.id)) {
 			activeItems = activeItems.filter((t) => t.id !== todo.id);
-			completedItems = [...completedItems, { ...todo, completed: true }];
+			completedItems = [{ ...todo, completed: true, order: Date.now() }, ...completedItems];
 		} else {
 			completedItems = completedItems.filter((t) => t.id !== todo.id);
 			activeItems = [{ ...todo, completed: false, order: Date.now() }, ...activeItems];
 		}
+	}
+
+	function editOptimistic(id: string, title: string) {
+		activeItems = activeItems.map((t) => (t.id === id ? { ...t, title } : t));
+		completedItems = completedItems.map((t) => (t.id === id ? { ...t, title } : t));
 	}
 
 	function handleSelect(todo: Todo, event: MouseEvent) {
@@ -182,6 +186,7 @@
 			onRemove={removeOptimistic}
 			onRestore={restoreOptimistic}
 			onSelect={handleSelect}
+			onEdit={editOptimistic}
 		/>
 	{:else}
 		<p class="px-5 py-4 text-sm text-neutral-400">No todos yet.</p>
@@ -190,32 +195,22 @@
 
 {#if completedItems.length > 0}
 	<div class="mt-4">
-		<button
-			type="button"
-			onclick={() => (completedOpen = !completedOpen)}
-			class="flex items-center gap-1 px-5 pb-2 text-sm font-medium text-neutral-700"
-		>
-			{#if completedOpen}
-				<ChevronDown size={14} class="text-neutral-400" />
-			{:else}
-				<ChevronRight size={14} class="text-neutral-400" />
-			{/if}
+		<p class="flex items-center gap-1 px-5 pb-2 text-sm font-medium text-neutral-700">
 			Completed
 			<span class="text-neutral-400">{completedItems.length}</span>
-		</button>
-		{#if completedOpen}
-			{#each completedItems as todo (todo.id)}
-				<div animate:flip={{ duration: 200 }}>
-					<TodoItem
-						{todo}
-						{lists}
-						showDivider={false}
-						onToggle={toggleLocal}
-						onRemove={removeOptimistic}
-						onRestore={restoreOptimistic}
-					/>
-				</div>
-			{/each}
-		{/if}
+		</p>
+		{#each completedItems as todo (todo.id)}
+			<div animate:flip={{ duration: 200 }}>
+				<TodoItem
+					{todo}
+					{lists}
+					showDivider={false}
+					onToggle={toggleLocal}
+					onRemove={removeOptimistic}
+					onRestore={restoreOptimistic}
+					onEdit={editOptimistic}
+				/>
+			</div>
+		{/each}
 	</div>
 {/if}

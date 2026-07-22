@@ -8,8 +8,11 @@
 	import { closeOnOutsideClick } from '$lib/actions/closeOnOutsideClick';
 	import type { ListWithCount } from '$lib/server/db/schema';
 
-	let { lists, activeListId = null }: { lists: ListWithCount[]; activeListId?: string | null } =
-		$props();
+	let {
+		lists,
+		activeListId = null,
+		onNavigate
+	}: { lists: ListWithCount[]; activeListId?: string | null; onNavigate?: () => void } = $props();
 
 	let localLists = $state<ListWithCount[]>([]);
 
@@ -89,6 +92,7 @@
 				<ListIcon size={16} class="shrink-0 text-neutral-400" />
 				<a
 					href="/lists/{list.id}"
+					onclick={() => onNavigate?.()}
 					class="min-w-0 flex-1 truncate text-sm text-neutral-800 {isActive ? 'font-medium' : ''}"
 				>
 					{#key list.name}
@@ -96,11 +100,7 @@
 					{/key}
 				</a>
 
-				<span
-					class="shrink-0 text-xs text-neutral-400 group-hover:hidden {list.todoCount === 0
-						? 'invisible'
-						: ''}"
-				>
+				<span class="shrink-0 text-xs text-neutral-400 {list.todoCount === 0 ? 'invisible' : ''}">
 					{list.todoCount}
 				</span>
 
